@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "736360713217",
+    "firebase_url": "https://peliculas-3d155-default-rtdb.firebaseio.com",
+    "project_id": "peliculas-3d155",
+    "storage_bucket": "peliculas-3d155.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736360713217:android:53a69cfc6c98cad8958400",
+        "android_client_info": {
+          "package_name": "com.DefaultCompany.MoviesApp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "736360713217-666u07d4gif1q7tnjr4njincv5u7nlf4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiHA06b1qSyWKWpAqs0rA3EAKMXQR3wfM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "736360713217-666u07d4gif1q7tnjr4njincv5u7nlf4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
