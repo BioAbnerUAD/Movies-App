@@ -5,8 +5,7 @@ using UnityEngine.Networking;
 
 public class ImageLoader : MonoBehaviour
 {
-  RawImage rawImage;
-
+  public RawImage rawImage;
   public string imagePath = "";
 
   void Start()

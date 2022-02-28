@@ -15,6 +15,7 @@ public class Single_DatePicker : DateRangePicker
   [SerializeField] private DateTime? m_StartDate;
   public DateTime? startDate {
     get => m_StartDate;
+    set => m_StartDate = value;
   }
 
   private void Start()

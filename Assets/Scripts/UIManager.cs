@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour
   public GameObject mainMenuUI;
   public GameObject newMovieUI;
   public GameObject listMoviesUI;
+  public GameObject listUsersUI;
 
   private void Awake()
   {
@@ -36,6 +37,7 @@ public class UIManager : MonoBehaviour
     mainMenuUI.SetActive(false);
     newMovieUI.SetActive(false);
     listMoviesUI.SetActive(false);
+    listUsersUI.SetActive(false);
   }
 
   public void LoginScreen()
@@ -53,18 +55,32 @@ public class UIManager : MonoBehaviour
   public void MainMenuScreen()
   {
     ClearScreen();
+
+    int userType = FirebaseManager.instance.userData.userType;
+    
+    var buttonsTfrm = mainMenuUI.transform.GetChild(1);
+    buttonsTfrm.GetChild(0).gameObject.SetActive(userType > 0); // New Movie Button
+    buttonsTfrm.GetChild(2).gameObject.SetActive(userType > 1); // List Users Button
+
     mainMenuUI.SetActive(true);
   }
 
-  public void NewMovieScreen() //Scoreboard button
+  public void NewMovieScreen(string title = "Película Nueva")
   {
     ClearScreen();
     newMovieUI.SetActive(true);
+    newMovieUI.transform.GetChild(0).gameObject.name = title;
   }
 
-  public void ListMoviesScreen() //Scoreboard button
+  public void ListMoviesScreen()
   {
     ClearScreen();
     listMoviesUI.SetActive(true);
+  }
+
+  public void ListUsersScreen()
+  {
+    ClearScreen();
+    listUsersUI.SetActive(true);
   }
 }

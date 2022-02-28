@@ -13,6 +13,7 @@ using Firebase.Storage;
 using TMPro;
 using SimpleFileBrowser;
 
+[Serializable]
 public struct MovieData
 {
   public string title;
@@ -23,10 +24,14 @@ public struct MovieData
   public string imageUri;
 };
 
+[Serializable]
 public struct UserData
 {
   public string userID;
+  public string userName;
+  public string email;
   public int userType;
+  public bool isVerified;
 };
 
 public class FirebaseManager : MonoBehaviour
@@ -36,8 +41,9 @@ public class FirebaseManager : MonoBehaviour
   //Firebase variables
   [Header("Firebase")]
   public DependencyStatus dependencyStatus;
-  public FirebaseAuth auth;  
+  public FirebaseAuth auth;
   public FirebaseUser user;
+  public UserData userData;
   public DatabaseReference dbReference;
   public FirebaseStorage storage;
   public StorageReference storageReference;
@@ -55,6 +61,7 @@ public class FirebaseManager : MonoBehaviour
   public TMP_InputField emailRegisterField;
   public TMP_InputField passwordRegisterField;
   public TMP_InputField passwordRegisterVerifyField;
+  public TMP_Dropdown userTypeDropdown;
   public TMP_Text warningRegisterText;
 
   //New Movie variables
@@ -70,6 +77,11 @@ public class FirebaseManager : MonoBehaviour
   [Header("List Movies")]
   public Transform listMoviesContent;
   public GameObject movieElementPref;
+
+  //List Users variables
+  [Header("List Users")]
+  public Transform listUsersContent;
+  public GameObject userElementPref;
 
   void Awake()
   {
@@ -142,9 +154,12 @@ public class FirebaseManager : MonoBehaviour
   public void RegisterButton()
   {
     //Call the register coroutine passing the email, password, and username
-    StartCoroutine(Register(emailRegisterField.text, passwordRegisterField.text, usernameRegisterField.text));
+    StartCoroutine(Register(emailRegisterField.text,
+                            passwordRegisterField.text, 
+                            usernameRegisterField.text,
+                            userTypeDropdown.value));
   }
-  //Function for the sign out button
+
   public void SignOutButton()
   {
     auth.SignOut();
@@ -153,7 +168,6 @@ public class FirebaseManager : MonoBehaviour
     ClearLoginFields();
   }
 
-  //Function for the save data button
   public void SaveDataButton()
   {
     StartCoroutine(UpdateMovieData(new MovieData {
@@ -166,10 +180,14 @@ public class FirebaseManager : MonoBehaviour
     }));
   }
 
-  //Function for the scoreboard button
   public void ListMoviesButton()
   {
     StartCoroutine(LoadMoviesData());
+  }
+
+  public void ListUsersButton()
+  {
+    StartCoroutine(LoadAdminsUsersData());
   }
 
   private IEnumerator Login(string _email, string _password)
@@ -209,24 +227,36 @@ public class FirebaseManager : MonoBehaviour
     }
     else
     {
-      //User is now logged in
-      //Now get the result
-      user = LoginTask.Result;
-      Debug.LogFormat("User signed in successfully: {0} ({1})", user.DisplayName, user.Email);
-      warningLoginText.text = "";
-      confirmLoginText.text = "Logged In";
-      StartCoroutine(LoadUserData());
+      yield return LoadUserData();
 
-      yield return new WaitForSeconds(1);
+      if(!userData.isVerified)
+      {
+        auth.SignOut();
+        warningLoginText.text = "User not verified or deleted";
+      }
+      else
+      {
+        //User is now logged in
+        //Now get the result
+        user = LoginTask.Result;
+        Debug.LogFormat("User signed in successfully: {0} ({1})", user.DisplayName, user.Email);
+        warningLoginText.text = "";
+        confirmLoginText.text = "Logged In";
 
-      UIManager.instance.MainMenuScreen(); // Change to user data UI
-      confirmLoginText.text = "";
-      ClearLoginFields();
-      ClearRegisterFields();
+        yield return new WaitForSeconds(1);
+
+        UIManager.instance.MainMenuScreen(); // Change to user data UI
+        confirmLoginText.text = "";
+        ClearLoginFields();
+        ClearRegisterFields();
+      }
     }
   }
 
-  private IEnumerator Register(string _email, string _password, string _username)
+  private IEnumerator Register(string _email, 
+                               string _password, 
+                               string _username, 
+                               int _userType)
   {
     if (_username == "")
     {
@@ -279,7 +309,9 @@ public class FirebaseManager : MonoBehaviour
         if (user != null)
         {
           //Create a user profile and set the username
-          UserProfile profile = new UserProfile{DisplayName = _username};
+          UserProfile profile = new UserProfile{
+            DisplayName = _username
+          };
 
           //Call the Firebase auth update user profile function passing the profile with the username
           var ProfileTask = user.UpdateUserProfileAsync(profile);
@@ -294,7 +326,14 @@ public class FirebaseManager : MonoBehaviour
           }
           else
           {
-            //yield return UpdateDBUserData();
+            yield return UpdateDBUserData(new UserData
+            {
+              userID = user.UserId,
+              userName = user.DisplayName,
+              email = user.Email,
+              userType = _userType,
+              isVerified = _userType <= 0
+            });
 
             //Username is now set
             //Now return to login screen
@@ -308,62 +347,14 @@ public class FirebaseManager : MonoBehaviour
     }
   }
 
-  private IEnumerator UpdateUsernameAuth(string _username)
+  private IEnumerator UpdateDBUserData(UserData data)
   {
-    //Create a user profile and set the username
-    UserProfile profile = new UserProfile { DisplayName = _username };
-
-    //Call the Firebase auth update user profile function passing the profile with the username
-    var ProfileTask = user.UpdateUserProfileAsync(profile);
-    //Wait until the task completes
-    yield return new WaitUntil(() => ProfileTask.IsCompleted);
-
-    if(ProfileTask.Exception != null)
-    {
-      Debug.LogWarning(message: $"Failed to register task with {ProfileTask.Exception}");
-    }
-    else
-    {
-      //Auth username is now updated
-    }
-  }
-
-  /*private IEnumerator UpdateDBUserData(UserData data)
-  {
-    if (data.title == "")
+    if (data.userID == "")
     {
       yield break;
     }
 
-    if (data.imageUri != "")
-    {
-      //Create a reference to where the file needs to be uploaded
-      string extension = Path.GetExtension(data.imageUri);
-      string pathStr = "images/" + data.title + extension;
-      StorageReference uploadRef = storageReference.Child(pathStr);
-
-      //Editing Metadata
-      var newMetadata = new MetadataChange();
-      newMetadata.ContentType = "image/" + extension.Substring(1);
-
-      var imageTask = uploadRef.PutFileAsync(data.imageUri, newMetadata);
-      yield return new WaitUntil(() => imageTask.IsCompleted);
-
-      if (imageTask.Exception != null)
-      {
-        data.imageUri = "";
-        Debug.LogWarning(message: $"Failed to register task with {imageTask.Exception}");
-        yield break;
-      }
-      else
-      {
-        var urlTask = imageTask.Result.Reference.GetDownloadUrlAsync();
-        yield return new WaitUntil(() => urlTask.IsCompleted);
-        data.imageUri = urlTask.Result.AbsoluteUri;
-      }
-    }
-
-    var DBTask = dbReference.Child("movies").Child(data.title).SetRawJsonValueAsync(
+    var DBTask = dbReference.Child("users").Child(data.userID).SetRawJsonValueAsync(
       JsonUtility.ToJson(data)
     );
 
@@ -373,7 +364,69 @@ public class FirebaseManager : MonoBehaviour
     {
       Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
     }
-  }*/
+  }
+
+  public void SetUserVerified(string userID, bool value)
+  {
+    StartCoroutine(SetUserVerifiedCoroutine(userID, value));
+  }
+
+  public void DeleteUser(string userID)
+  {
+    StartCoroutine(DeleteUserCoroutine(userID));
+  }
+
+  public void DeleteMovie(string title)
+  {
+    StartCoroutine(DeleteMovieCoroutine(title));
+  }
+
+  private IEnumerator SetUserVerifiedCoroutine(string userID, bool value)
+  {
+    if (userID == "")
+    {
+      yield break;
+    }
+
+    var DBTask = dbReference.Child("users").Child(userID).
+                             Child("isVerified").SetValueAsync(value);
+
+    yield return new WaitUntil(() => DBTask.IsCompleted);
+
+    if (DBTask.Exception != null)
+    {
+      Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+    }
+  }
+
+  private IEnumerator DeleteUserCoroutine(string userID)
+  {
+    if (userID == "")
+    {
+      yield break;
+    }
+
+    var DBTask = dbReference.Child("users").Child(userID).RemoveValueAsync();
+
+    yield return new WaitUntil(() => DBTask.IsCompleted);
+
+    if (DBTask.Exception != null)
+    {
+      Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+    }
+  }
+
+  private IEnumerator DeleteMovieCoroutine(string title)
+  {
+    var DBTask = dbReference.Child("movies").Child(title).RemoveValueAsync();
+
+    yield return new WaitUntil(() => DBTask.IsCompleted);
+
+    if (DBTask.Exception != null)
+    {
+      Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+    }
+  }
 
   private IEnumerator UpdateMovieData(MovieData data)
   {
@@ -381,12 +434,16 @@ public class FirebaseManager : MonoBehaviour
     {
       yield break;
     }
+    
+    string entryName = userData.userType == 0 ? 
+                       (data.title + "_" + Guid.NewGuid().ToString()) : 
+                       data.title;
 
     if(data.imageUri != "")
     {
       //Create a reference to where the file needs to be uploaded
       string extension = Path.GetExtension(data.imageUri);
-      string pathStr = "images/" + data.title + extension;
+      string pathStr = "images/" + entryName + extension;
       StorageReference uploadRef = storageReference.Child(pathStr);
 
       //Editing Metadata
@@ -410,7 +467,8 @@ public class FirebaseManager : MonoBehaviour
       }
     }
 
-    var DBTask = dbReference.Child("movies").Child(data.title).SetRawJsonValueAsync(
+    string tableName = userData.userType == 0 ? "edit_movie_petition" : "movies";
+    var DBTask = dbReference.Child(tableName).Child(entryName).SetRawJsonValueAsync(
       JsonUtility.ToJson(data)
     );
 
@@ -432,22 +490,24 @@ public class FirebaseManager : MonoBehaviour
     {
       Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
     }
-    /*else if(DBTask.Result.Value == null)
+    else if(DBTask.Result.Value == null)
     {
       //No data exists yet
-      xpField.text = "0";
-      killsField.text = "0";
-      deathsField.text = "0";
+      userData = new UserData
+      {
+        userID = user.UserId,
+        userName = user.DisplayName,
+        email = user.Email,
+        userType = 0,
+        isVerified = false
+      };
     }
     else
     {
       //Data has been retrieved
       DataSnapshot snapshot = DBTask.Result;
-
-      xpField.text = snapshot.Child("xp").Value.ToString();
-      killsField.text = snapshot.Child("kills").Value.ToString();
-      deathsField.text = snapshot.Child("deaths").Value.ToString();
-    }*/
+      userData = JsonUtility.FromJson<UserData>(snapshot.GetRawJsonValue());
+    }
   }
 
   private IEnumerator LoadMoviesData()
@@ -471,18 +531,54 @@ public class FirebaseManager : MonoBehaviour
         Destroy(child.gameObject);
       }
 
-      //Loop through every users UID
+      //Loop through every movie
       foreach (DataSnapshot childSnapshot in snapshot.Children.Reverse())
       {
         var data = JsonUtility.FromJson<MovieData>(childSnapshot.GetRawJsonValue());
 
-        //Instantiate new scoreboard elements
+        //Instantiate new movies elements
         GameObject movieElement = Instantiate(movieElementPref, listMoviesContent);
         movieElement.GetComponent<MovieElement>().NewMovieElement(data);
       }
 
-      //Goto scoreboard screen
+      //Goto movies screen
       UIManager.instance.ListMoviesScreen();
+    }
+  }
+
+  private IEnumerator LoadAdminsUsersData()
+  {
+    var DBTask = dbReference.Child("users").OrderByChild("userType").GetValueAsync();
+
+    yield return new WaitUntil(() => DBTask.IsCompleted);
+
+    if (DBTask.Exception != null)
+    {
+      Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+    }
+    else
+    {
+      //Data has been retrieved
+      DataSnapshot snapshot = DBTask.Result;
+
+      //Destroy any existing scoreboard elements
+      foreach (Transform child in listUsersContent.transform)
+      {
+        Destroy(child.gameObject);
+      }
+
+      //Loop through every users UID
+      foreach (DataSnapshot childSnapshot in snapshot.Children.Reverse())
+      {
+        var data = JsonUtility.FromJson<UserData>(childSnapshot.GetRawJsonValue());
+
+        //Instantiate new users elements
+        GameObject userElement = Instantiate(userElementPref, listMoviesContent);
+        userElement.GetComponent<UserElement>().NewUserElement(data);
+      }
+
+      //Goto users screen
+      UIManager.instance.ListUsersScreen();
     }
   }
 

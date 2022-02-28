@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 
 using UnityEngine;
@@ -15,6 +16,7 @@ public class MovieElement : MonoBehaviour
   public TMP_Text ratingText;
   public TMP_Text genreText;
   public RawImage rawImage;
+  public Button deleteBtn;
 
   string imageUrl;
 
@@ -46,5 +48,24 @@ public class MovieElement : MonoBehaviour
       // setting the loaded image to our object
       rawImage.texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
     }
+  }
+
+  public void EditMovie()
+  {
+    var firebase = FirebaseManager.instance;
+    firebase.titleField.text = titleText.text;
+    firebase.descriptionField.text = descriptionText.text;
+    firebase.releaseDatePicker.startDate = DateTime.Parse(releaseDateText.text);
+    firebase.ratingField.text = ratingText.text;
+    firebase.genreField.text = genreText.text;
+    firebase.imagePicker.rawImage.texture = rawImage.texture;
+    deleteBtn.interactable = FirebaseManager.instance.userData.userType > 0;
+    UIManager.instance.NewMovieScreen("Editar Película");
+  }
+
+  public void DeleteMovie()
+  {
+    FirebaseManager.instance.DeleteMovie(titleText.text);
+    Destroy(gameObject);
   }
 }
