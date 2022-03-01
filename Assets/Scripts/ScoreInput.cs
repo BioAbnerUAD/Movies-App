@@ -16,6 +16,11 @@ public class ScoreInput : MonoBehaviour
 
   public void OnTextChange()
   {
+    if(!field)
+    {
+      Start();
+    }
+
     float value;
     if(float.TryParse(field.text, out value))
     {

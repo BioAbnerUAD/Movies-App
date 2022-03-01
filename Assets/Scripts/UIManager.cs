@@ -29,6 +29,12 @@ public class UIManager : MonoBehaviour
     }
   }
 
+  private void Start()
+  {
+    ClearScreen();
+    LoginScreen();
+  }
+
   //Functions to change the login screen UI
 
   public void ClearScreen() //Turn off all screens
