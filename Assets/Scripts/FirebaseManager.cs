@@ -643,7 +643,7 @@ public class FirebaseManager : MonoBehaviour
         var data = JsonUtility.FromJson<UserData>(childSnapshot.GetRawJsonValue());
 
         //Instantiate new users elements
-        GameObject userElement = Instantiate(userElementPref, listMoviesContent);
+        GameObject userElement = Instantiate(userElementPref, listUsersContent);
         userElement.GetComponent<UserElement>().NewUserElement(data);
       }
 

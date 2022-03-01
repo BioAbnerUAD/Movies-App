@@ -15,12 +15,18 @@ public class Single_DatePicker : DateRangePicker
   [SerializeField] private DateTime? m_StartDate;
   public DateTime? startDate {
     get => m_StartDate;
-    set => m_StartDate = value;
   }
 
   private void Start()
   {
     Setup();
+  }
+
+  public void SetStartDate(DateTime value)
+  {
+    m_StartDate = value;
+    CalendersUpdated?.Invoke(m_StartDate, m_StartDate);
+    m_Calender.Setup(value.Year, value.Month, m_FirstDayOfWeek, m_ShowDaysInOtherMonths, m_StartDate, m_StartDate, UITweenManager);
   }
 
   public override void Setup()

@@ -57,14 +57,15 @@ public class MovieElement : MonoBehaviour
 
   public void EditMovie()
   {
+    UIManager.instance.NewMovieScreen("Editar Película");
+
     var firebase = FirebaseManager.instance;
     firebase.titleField.text = titleText.text;
     firebase.descriptionField.text = descriptionText.text;
-    firebase.releaseDatePicker.startDate = DateTime.Parse(releaseDateText.text);
+    firebase.releaseDatePicker.SetStartDate(DateTime.Parse(releaseDateText.text));
     firebase.ratingField.text = ratingText.text;
     firebase.genreField.text = genreText.text;
     firebase.imagePicker.rawImage.texture = rawImage.texture;
-    UIManager.instance.NewMovieScreen("Editar Película");
   }
 
   public void DeleteMovie()
@@ -90,5 +91,6 @@ public class MovieElement : MonoBehaviour
       genre = genreText.text,
       imageUri = imageUrl
     });
+    Destroy(gameObject);
   }
 }
