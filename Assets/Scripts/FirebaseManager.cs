@@ -63,6 +63,7 @@ public class FirebaseManager : MonoBehaviour
   public TMP_InputField passwordRegisterVerifyField;
   public TMP_Dropdown userTypeDropdown;
   public TMP_Text warningRegisterText;
+  public TMP_Text confirmRegisterText;
 
   //New Movie variables
   [Header("New Movie")]
@@ -72,6 +73,8 @@ public class FirebaseManager : MonoBehaviour
   public TMP_InputField ratingField;
   public TMP_InputField genreField;
   public ImageLoader imagePicker;
+  public TMP_Text warningInsertText;
+  public TMP_Text confirmInsertText;
 
   //List Movies variables
   [Header("List Movies")]
@@ -148,14 +151,25 @@ public class FirebaseManager : MonoBehaviour
     passwordRegisterField.text = "";
     passwordRegisterVerifyField.text = "";
   }
-  
-  //Function for the login button
+
+  public void ClearNewMovieFields()
+  {
+    titleField.text = "";
+    descriptionField.text = "";
+    releaseDatePicker.SetStartDate(null);
+    ratingField.text = "0";
+    genreField.text = "";
+    imagePicker.rawImage.texture = null;
+    warningInsertText.text = "";
+    confirmInsertText.text = "";
+  }
+
   public void LoginButton()
   {
     //Call the login coroutine passing the email and password
     StartCoroutine(Login(emailLoginField.text, passwordLoginField.text));
   }
-  //Function for the register button
+
   public void RegisterButton()
   {
     //Call the register coroutine passing the email, password, and username
@@ -203,6 +217,26 @@ public class FirebaseManager : MonoBehaviour
   public void ListUsersButton()
   {
     StartCoroutine(LoadAdminsUsersData());
+  }
+
+  public void SetUserVerified(string userID, bool value)
+  {
+    StartCoroutine(SetUserVerifiedCoroutine(userID, value));
+  }
+
+  public void DeleteUser(string userID)
+  {
+    StartCoroutine(DeleteUserCoroutine(userID));
+  }
+
+  public void DeleteMovie(string title)
+  {
+    StartCoroutine(DeleteMovieCoroutine(title));
+  }
+
+  public void DeleteEdit(string title)
+  {
+    StartCoroutine(DeleteEditCoroutine(title));
   }
 
   private IEnumerator Login(string _email, string _password)
@@ -351,10 +385,16 @@ public class FirebaseManager : MonoBehaviour
               isVerified = _userType <= 0
             });
 
+            confirmRegisterText.text = "Successful Register!";
+
+            yield return new WaitForSeconds(1);
+
+            confirmRegisterText.text = "";
+            warningRegisterText.text = "";
+
             //Username is now set
             //Now return to login screen
-            UIManager.instance.LoginScreen();            
-            warningRegisterText.text = "";
+            UIManager.instance.LoginScreen();
             ClearLoginFields();
             ClearRegisterFields();
           }
@@ -382,25 +422,6 @@ public class FirebaseManager : MonoBehaviour
     }
   }
 
-  public void SetUserVerified(string userID, bool value)
-  {
-    StartCoroutine(SetUserVerifiedCoroutine(userID, value));
-  }
-
-  public void DeleteUser(string userID)
-  {
-    StartCoroutine(DeleteUserCoroutine(userID));
-  }
-
-  public void DeleteMovie(string title)
-  {
-    StartCoroutine(DeleteMovieCoroutine(title));
-  }
-
-  public void DeleteEdit(string title)
-  {
-    StartCoroutine(DeleteEditCoroutine(title));
-  }
 
   private IEnumerator SetUserVerifiedCoroutine(string userID, bool value)
   {
@@ -465,6 +486,7 @@ public class FirebaseManager : MonoBehaviour
   {
     if(data.title == "")
     {
+      warningInsertText.text = "Missing title";
       yield break;
     }
     
@@ -510,6 +532,15 @@ public class FirebaseManager : MonoBehaviour
     if(DBTask.Exception != null)
     {
       Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+    }
+    else
+    {
+      warningInsertText.text = "";
+      confirmInsertText.text = "Success!";
+
+      yield return new WaitForSeconds(1);
+
+      UIManager.instance.MainMenuScreen();
     }
   }
 
@@ -578,7 +609,6 @@ public class FirebaseManager : MonoBehaviour
       UIManager.instance.ListMoviesScreen();
     }
   }
-
 
   private IEnumerator LoadMovieEditsData()
   {

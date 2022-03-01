@@ -5,22 +5,16 @@ using UnityEngine;
 
 public class ScoreInput : MonoBehaviour
 {
-  TMP_InputField field;
+  public TMP_InputField field;
   string oldValue;
 
   void Start()
   {
-    field = GetComponent<TMP_InputField>();
     oldValue = field.text;
   }
 
   public void OnTextChange()
   {
-    if(!field)
-    {
-      Start();
-    }
-
     float value;
     if(float.TryParse(field.text, out value))
     {

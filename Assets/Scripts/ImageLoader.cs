@@ -8,11 +8,6 @@ public class ImageLoader : MonoBehaviour
   public RawImage rawImage;
   public string imagePath = "";
 
-  void Start()
-  {
-    rawImage = GetComponent<RawImage>();
-  }
-
   public void OnImageClick()
   {
     StartCoroutine(LoadImage());

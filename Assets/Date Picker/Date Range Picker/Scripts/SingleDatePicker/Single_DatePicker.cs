@@ -22,11 +22,27 @@ public class Single_DatePicker : DateRangePicker
     Setup();
   }
 
-  public void SetStartDate(DateTime value)
+  public void SetStartDate(DateTime? value)
   {
     m_StartDate = value;
     CalendersUpdated?.Invoke(m_StartDate, m_StartDate);
-    m_Calender.Setup(value.Year, value.Month, m_FirstDayOfWeek, m_ShowDaysInOtherMonths, m_StartDate, m_StartDate, UITweenManager);
+    if(value != null)
+    {
+      m_Calender.Setup(
+        ((DateTime)value).Year, 
+        ((DateTime)value).Month, 
+        m_FirstDayOfWeek, 
+        m_ShowDaysInOtherMonths, 
+        m_StartDate, 
+        m_StartDate, 
+        UITweenManager
+      );
+    }
+    else
+    {
+      for (int i = 0; i < 42; i++)
+        m_Calender.CalenderButtons[i].ResetToOriginal();
+    }
   }
 
   public override void Setup()

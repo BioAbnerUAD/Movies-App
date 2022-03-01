@@ -91,6 +91,7 @@ public class MovieElement : MonoBehaviour
       genre = genreText.text,
       imageUri = imageUrl
     });
+    FirebaseManager.instance.DeleteEdit(entryName);
     Destroy(gameObject);
   }
 }

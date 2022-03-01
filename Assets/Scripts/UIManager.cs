@@ -78,7 +78,10 @@ public class UIManager : MonoBehaviour
   {
     ClearScreen();
     newMovieUI.SetActive(true);
-    newMovieUI.transform.GetChild(0).gameObject.name = title;
+    newMovieUI.transform.GetChild(0).
+               GetComponent<TMP_Text>().text = title;
+
+    FirebaseManager.instance.ClearNewMovieFields();
   }
 
   public void ListMoviesScreen()
