@@ -19,15 +19,20 @@ public class MovieElement : MonoBehaviour
   public Button deleteBtn;
 
   string imageUrl;
+  string entryName;
 
-  public void NewMovieElement(MovieData data)
+  public void NewMovieElement(string _entryName, MovieData data)
   {
+    entryName = _entryName;
+
     titleText.text       = data.title;
     descriptionText.text = data.description;
     releaseDateText.text = data.releaseDate;
     ratingText.text      = data.rating.ToString();
     genreText.text       = data.genre;
     imageUrl             = data.imageUri;
+
+    deleteBtn.interactable = FirebaseManager.instance.userData.userType > 0;
   }
 
   void Start()
@@ -59,7 +64,6 @@ public class MovieElement : MonoBehaviour
     firebase.ratingField.text = ratingText.text;
     firebase.genreField.text = genreText.text;
     firebase.imagePicker.rawImage.texture = rawImage.texture;
-    deleteBtn.interactable = FirebaseManager.instance.userData.userType > 0;
     UIManager.instance.NewMovieScreen("Editar Película");
   }
 
@@ -67,5 +71,24 @@ public class MovieElement : MonoBehaviour
   {
     FirebaseManager.instance.DeleteMovie(titleText.text);
     Destroy(gameObject);
+  }
+
+  public void DeleteEdit()
+  {
+    FirebaseManager.instance.DeleteEdit(entryName);
+    Destroy(gameObject);
+  }
+
+  public void ConfirmEdit()
+  {
+    FirebaseManager.instance.UpdateData(new MovieData
+    {
+      title = titleText.text,
+      description = descriptionText.text,
+      releaseDate = releaseDateText.text,
+      rating = float.Parse(ratingText.text),
+      genre = genreText.text,
+      imageUri = imageUrl
+    });
   }
 }

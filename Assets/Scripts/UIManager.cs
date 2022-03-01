@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour
   public GameObject mainMenuUI;
   public GameObject newMovieUI;
   public GameObject listMoviesUI;
+  public GameObject listEditsUI;
   public GameObject listUsersUI;
 
   private void Awake()
@@ -38,6 +39,7 @@ public class UIManager : MonoBehaviour
     newMovieUI.SetActive(false);
     listMoviesUI.SetActive(false);
     listUsersUI.SetActive(false);
+    listEditsUI.SetActive(false);
   }
 
   public void LoginScreen()
@@ -61,6 +63,7 @@ public class UIManager : MonoBehaviour
     var buttonsTfrm = mainMenuUI.transform.GetChild(1);
     buttonsTfrm.GetChild(0).gameObject.SetActive(userType > 0); // New Movie Button
     buttonsTfrm.GetChild(2).gameObject.SetActive(userType > 1); // List Users Button
+    buttonsTfrm.GetChild(3).gameObject.SetActive(userType > 1); // List Edits Button
 
     mainMenuUI.SetActive(true);
   }
@@ -76,6 +79,12 @@ public class UIManager : MonoBehaviour
   {
     ClearScreen();
     listMoviesUI.SetActive(true);
+  }
+
+  public void ListEditsScreen()
+  {
+    ClearScreen();
+    listEditsUI.SetActive(true);
   }
 
   public void ListUsersScreen()

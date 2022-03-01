@@ -78,6 +78,11 @@ public class FirebaseManager : MonoBehaviour
   public Transform listMoviesContent;
   public GameObject movieElementPref;
 
+  //List Movies variables
+  [Header("List Edit Movies")]
+  public Transform listEditMoviesContent;
+  public GameObject movieEditElementPref;
+
   //List Users variables
   [Header("List Users")]
   public Transform listUsersContent;
@@ -168,6 +173,11 @@ public class FirebaseManager : MonoBehaviour
     ClearLoginFields();
   }
 
+  public void UpdateData(MovieData data)
+  {
+    StartCoroutine(UpdateMovieData(data));
+  }
+
   public void SaveDataButton()
   {
     StartCoroutine(UpdateMovieData(new MovieData {
@@ -183,6 +193,11 @@ public class FirebaseManager : MonoBehaviour
   public void ListMoviesButton()
   {
     StartCoroutine(LoadMoviesData());
+  }
+
+  public void ListMovieEditsButton()
+  {
+    StartCoroutine(LoadMovieEditsData());
   }
 
   public void ListUsersButton()
@@ -227,18 +242,19 @@ public class FirebaseManager : MonoBehaviour
     }
     else
     {
+      user = LoginTask.Result;
       yield return LoadUserData();
 
       if(!userData.isVerified)
       {
         auth.SignOut();
         warningLoginText.text = "User not verified or deleted";
+        user = null;
       }
       else
       {
         //User is now logged in
         //Now get the result
-        user = LoginTask.Result;
         Debug.LogFormat("User signed in successfully: {0} ({1})", user.DisplayName, user.Email);
         warningLoginText.text = "";
         confirmLoginText.text = "Logged In";
@@ -381,6 +397,11 @@ public class FirebaseManager : MonoBehaviour
     StartCoroutine(DeleteMovieCoroutine(title));
   }
 
+  public void DeleteEdit(string title)
+  {
+    StartCoroutine(DeleteEditCoroutine(title));
+  }
+
   private IEnumerator SetUserVerifiedCoroutine(string userID, bool value)
   {
     if (userID == "")
@@ -428,6 +449,18 @@ public class FirebaseManager : MonoBehaviour
     }
   }
 
+  private IEnumerator DeleteEditCoroutine(string title)
+  {
+    var DBTask = dbReference.Child("edit_movie_petition").Child(title).RemoveValueAsync();
+
+    yield return new WaitUntil(() => DBTask.IsCompleted);
+
+    if (DBTask.Exception != null)
+    {
+      Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+    }
+  }
+
   private IEnumerator UpdateMovieData(MovieData data)
   {
     if(data.title == "")
@@ -439,7 +472,7 @@ public class FirebaseManager : MonoBehaviour
                        (data.title + "_" + Guid.NewGuid().ToString()) : 
                        data.title;
 
-    if(data.imageUri != "")
+    if(data.imageUri != "" && !data.imageUri.StartsWith("https://"))
     {
       //Create a reference to where the file needs to be uploaded
       string extension = Path.GetExtension(data.imageUri);
@@ -525,7 +558,7 @@ public class FirebaseManager : MonoBehaviour
       //Data has been retrieved
       DataSnapshot snapshot = DBTask.Result;
 
-      //Destroy any existing scoreboard elements
+      //Destroy any existing movies elements
       foreach (Transform child in listMoviesContent.transform)
       {
         Destroy(child.gameObject);
@@ -538,11 +571,48 @@ public class FirebaseManager : MonoBehaviour
 
         //Instantiate new movies elements
         GameObject movieElement = Instantiate(movieElementPref, listMoviesContent);
-        movieElement.GetComponent<MovieElement>().NewMovieElement(data);
+        movieElement.GetComponent<MovieElement>().NewMovieElement(data.title, data);
       }
 
       //Goto movies screen
       UIManager.instance.ListMoviesScreen();
+    }
+  }
+
+
+  private IEnumerator LoadMovieEditsData()
+  {
+    var DBTask = dbReference.Child("edit_movie_petition").OrderByChild("title").GetValueAsync();
+
+    yield return new WaitUntil(() => DBTask.IsCompleted);
+
+    if (DBTask.Exception != null)
+    {
+      Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+    }
+    else
+    {
+      //Data has been retrieved
+      DataSnapshot snapshot = DBTask.Result;
+
+      //Destroy any existing movies elements
+      foreach (Transform child in listEditMoviesContent.transform)
+      {
+        Destroy(child.gameObject);
+      }
+
+      //Loop through every movie
+      foreach (DataSnapshot childSnapshot in snapshot.Children.Reverse())
+      {
+        var data = JsonUtility.FromJson<MovieData>(childSnapshot.GetRawJsonValue());
+
+        //Instantiate new movies elements
+        GameObject movieElement = Instantiate(movieEditElementPref, listEditMoviesContent);
+        movieElement.GetComponent<MovieElement>().NewMovieElement(childSnapshot.Key, data);
+      }
+
+      //Goto movies screen
+      UIManager.instance.ListEditsScreen();
     }
   }
 
@@ -561,7 +631,7 @@ public class FirebaseManager : MonoBehaviour
       //Data has been retrieved
       DataSnapshot snapshot = DBTask.Result;
 
-      //Destroy any existing scoreboard elements
+      //Destroy any existing movies elements
       foreach (Transform child in listUsersContent.transform)
       {
         Destroy(child.gameObject);
