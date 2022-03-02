@@ -24,6 +24,7 @@ public class Single_DatePicker : DateRangePicker
 
   public void SetStartDate(DateTime? value)
   {
+    Start();
     m_StartDate = value;
     CalendersUpdated?.Invoke(m_StartDate, m_StartDate);
     if(value != null)
@@ -37,11 +38,6 @@ public class Single_DatePicker : DateRangePicker
         m_StartDate, 
         UITweenManager
       );
-    }
-    else
-    {
-      for (int i = 0; i < 42; i++)
-        m_Calender.CalenderButtons[i].ResetToOriginal();
     }
   }
 
